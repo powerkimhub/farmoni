@@ -9,7 +9,7 @@
 
  import (
          "os"
-         "farmoni/localmoni/mem_usage"
+         "github.com/powerkimhub/farmoni/localmoni/mem_usage"
          "strconv"
          "time"
  )

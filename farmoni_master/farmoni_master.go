@@ -8,16 +8,16 @@ package main
 
 import (
 	"flag"
-	"farmoni/farmoni_master/ec2handler"
-	"farmoni/farmoni_master/serverhandler/scp"
-	"farmoni/farmoni_master/serverhandler/sshrun"
-	"farmoni/farmoni_master/etcdhandler"
+	"github.com/powerkimhub/farmoni/farmoni_master/ec2handler"
+	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/scp"
+	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/sshrun"
+	"github.com/powerkimhub/farmoni/farmoni_master/etcdhandler"
 	"fmt"
 	"context"
 	"time"
 	"log"
         "google.golang.org/grpc"
-        pb "farmoni/grpc_def"
+        pb "github.com/powerkimhub/farmoni/grpc_def"
 )
 
 const (

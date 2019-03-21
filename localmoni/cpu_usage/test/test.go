@@ -9,7 +9,7 @@
 
  import (
          "os"
-         "farmoni/localmoni/cpu_usage"
+         "github.com/powerkimhub/farmoni/localmoni/cpu_usage"
          "strconv"
          "time"
  )

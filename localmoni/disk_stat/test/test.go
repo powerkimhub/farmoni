@@ -9,7 +9,7 @@
 
  import (
          "os"
-         "farmoni/localmoni/disk_stat"
+         "github.com/powerkimhub/farmoni/localmoni/disk_stat"
          "strconv"
  )
 

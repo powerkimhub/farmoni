@@ -8,7 +8,7 @@ package main
 
 
  import (
-         "farmoni/farmoni_master/ec2handler"
+         "github.com/powerkimhub/farmoni/farmoni_master/ec2handler"
 	 "fmt"
  )
 

@@ -11,7 +11,7 @@
 
  import (
          "flag"
-         "farmoni/farmoni_master/etcdhandler"
+         "github.com/powerkimhub/farmoni/farmoni_master/etcdhandler"
 	 "context"
          "fmt"
  )

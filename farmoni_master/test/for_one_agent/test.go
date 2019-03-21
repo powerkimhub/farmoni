@@ -13,7 +13,7 @@ import (
 	"os"
 	"time"
 	"google.golang.org/grpc"
-	pb "farmoni/grpc_def"
+	pb "github.com/powerkimhub/farmoni/grpc_def"
 )
 
 const (

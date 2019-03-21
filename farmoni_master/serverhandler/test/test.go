@@ -8,8 +8,8 @@ package main
 
 import (
 	"fmt"
-	"farmoni/farmoni_master/serverhandler/scp"
-	"farmoni/farmoni_master/serverhandler/sshrun"
+	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/scp"
+	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/sshrun"
 )
 
 func main() {
