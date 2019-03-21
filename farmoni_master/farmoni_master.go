@@ -143,7 +143,7 @@ func addServersAWS(count int) {
     }
 
     // need to load SSH Service on the VM
-    time.Sleep(time.Second*3)
+    time.Sleep(time.Second*4)
     
 // 1.3. insert Farmoni Agent into Servers.
 // 1.4. execute Servers' Agent.
