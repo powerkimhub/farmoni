@@ -78,6 +78,10 @@ func parseRequest() {
 // 2.2. fetch all agent's monitoring info.
 func main() {
 
+        fmt.Println("(1) go run farmoni_master.go -addserversaws=10")
+        fmt.Println("(2) go run farmoni_master.go -monitoring")
+        fmt.Println("(3) go run farmoni_master.go -addserversaws=10")
+
 	// 1. parsing user's request.
 	parseRequest()
 
@@ -143,7 +147,7 @@ func addServersAWS(count int) {
     }
 
     // need to load SSH Service on the VM
-    time.Sleep(time.Second*4)
+    time.Sleep(time.Second*6)
     
 // 1.3. insert Farmoni Agent into Servers.
 // 1.4. execute Servers' Agent.
