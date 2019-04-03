@@ -126,3 +126,21 @@ func WaitForRun(svc *ec2.EC2, instanceID string) {
         fmt.Println("failed to wait until instances exist: %v", err)
     }
 }
+
+func DestroyInstances(svc *ec2.EC2, instanceIds []*string) error {
+
+    //input := &ec2.TerminateInstancesInput(instanceIds)
+    input := &ec2.TerminateInstancesInput{
+	InstanceIds: instanceIds ,
+    }	
+
+    _, err := svc.TerminateInstances(input)
+	
+
+    if err != nil {
+        fmt.Println("Could not termiate instances", err)
+    }
+
+    return err
+}
+
