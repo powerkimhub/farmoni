@@ -1,0 +1,24 @@
+#### Config for farmoni PoC ####
+
+# Infos of etcd server
+etcdserverport: "129.254.175.43:2379"
+
+## Config for AWS ##
+aws:
+
+# path of key file.
+  keyfilepath: /root/.aws/awspowerkimkeypair.pem 
+
+# Infos of Region
+  region: ap-northeast-2
+
+# Infos for creating Instnaces
+  imageid: ami-047f7b46bd6dd5d84 
+  instancenameprefix: powerkimInstance_  # EC2's Tag Name for group instances' ID
+  instancetype: t2.micro
+  keyname: aws.powerkim.keypair
+  securitygroupid: sg-2334584f
+  subnetid: subnet-8c4a53e4
+
+
+## Config for GCP ##
