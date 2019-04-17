@@ -19,10 +19,9 @@ func main() {
 
         fmt.Printf("\n<unmarshalled config values>\n")
         fmt.Printf("%v\n\n", masterConfigInfos)
-
  
+        fmt.Printf("\n<each config values>\n")
 	fmt.Printf("  %s\n", masterConfigInfos.ETCDSERVERPORT)
-
 	fmt.Printf("\t%s\n", masterConfigInfos.AWS.KEYFILEPATH)
 	fmt.Printf("\t%s\n", masterConfigInfos.AWS.REGION)
 	fmt.Printf("\t%s\n", masterConfigInfos.AWS.IMAGEID)
@@ -31,13 +30,8 @@ func main() {
 	fmt.Printf("\t%s\n", masterConfigInfos.AWS.KEYNAME)
 	fmt.Printf("\t%s\n", masterConfigInfos.AWS.SECURITYGROUPID)
 	fmt.Printf("\t%s\n\n", masterConfigInfos.AWS.SUBNETID)
-/*
 
-	d, err := yaml.Marshal(&t)
-        if err != nil {
-                log.Fatalf("error: %v", err)
-        }
-        fmt.Printf("<marshaled data>\n")
-        fmt.Printf("%s\n\n", string(d))
-*/
+	strMarshalled := confighandler.GetConfigString(&masterConfigInfos)
+        fmt.Printf("\n<marshalled config key-values>\n")
+	fmt.Printf("%s\n\n", strMarshalled)
 }

@@ -54,3 +54,10 @@ func GetMasterConfigInfos() MASTERCONFIGTYPE {
 	return masterConfigInfos
 }
 
+func GetConfigString(configInfos *MASTERCONFIGTYPE) string {
+        d, err := yaml.Marshal(configInfos)
+        if err != nil {
+                log.Fatalf("error: %v", err)
+        }
+	return string(d)
+}
