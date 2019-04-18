@@ -12,6 +12,8 @@ import (
 	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/scp"
 	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/sshrun"
 	"github.com/powerkimhub/farmoni/farmoni_master/etcdhandler"
+	"github.com/powerkimhub/farmoni/farmoni_master/confighandler"
+
 	"fmt"
 	"os"
 	"context"
@@ -26,6 +28,8 @@ const (
 	defaultServerName = "129.254.184.79"
 	port     = "2019"
 )
+
+var masterConfigInfos confighandler.MASTERCONFIGTYPE
 
 var etcdServerPort *string
 var fetchType *string
@@ -46,7 +50,9 @@ var delallServersAWS *bool
 
 func parseRequest() {
 
-        etcdServerPort = flag.String("etcdserver", "129.254.175.43:2379", "etcdserver=129.254.175.43:2379")
+        etcdServerPort = &masterConfigInfos.ETCDSERVERPORT
+
+        //etcdServerPort = flag.String("etcdserver", "129.254.175.43:2379", "etcdserver=129.254.175.43:2379")
         fetchType = flag.String("fetchtype", "PULL", "fetch type: -fetchtype=PUSH")
 /*
         addServer = flag.String("addserver", "none", "add a server: -addserver=192.168.0.10:5000")
@@ -95,10 +101,15 @@ func main() {
         fmt.Println("$ go run farmoni_master.go -serverlist")
         fmt.Println("")
 
+// load config
+	// you can see the details of masterConfigInfos
+	// at confighander/confighandler.go:MASTERCONFIGTYPE.
+	masterConfigInfos = confighandler.GetMasterConfigInfos()
 
  // dedicated option for PoC
 	// 1. parsing user's request.
 	parseRequest()
+
 
 //<add servers in AWS/GCP>
 	// 1.1. create Servers(VM).
@@ -138,15 +149,26 @@ func main() {
 // 1.5. add server list into etcd.
 func addServersAWS(count int) {
 // ==> AWS-EC2
-    region := "ap-northeast-2" // seoul region.
+    //region := "ap-northeast-2" // seoul region.
+    region := masterConfigInfos.AWS.REGION // seoul region.
 
     svc := ec2handler.Connect(region)
 
 // 1.1. create Servers(VM).
     // some options are static for simple PoC.
     // These must be prepared before.
-    instanceIds := ec2handler.CreateInstances(svc, "ami-047f7b46bd6dd5d84", "t2.micro", 1, count,
-        "aws.powerkim.keypair", "sg-2334584f", "subnet-8c4a53e4", "powerkimInstance_")
+
+    imageId := masterConfigInfos.AWS.IMAGEID  // ami-047f7b46bd6dd5d84
+    instanceType := masterConfigInfos.AWS.INSTANCETYPE  // t2.micro
+    keyName := masterConfigInfos.AWS.KEYNAME  // aws.powerkim.keypair
+    securityGroupId := masterConfigInfos.AWS.SECURITYGROUPID  // sg-2334584f
+    subnetid := masterConfigInfos.AWS.SUBNETID  // subnet-8c4a53e4
+    instanceNamePrefix := masterConfigInfos.AWS.INSTANCENAMEPREFIX  // powerkimInstance_
+
+    //instanceIds := ec2handler.CreateInstances(svc, "ami-047f7b46bd6dd5d84", "t2.micro", 1, count,
+    //   "aws.powerkim.keypair", "sg-2334584f", "subnet-8c4a53e4", "powerkimInstance_")
+    instanceIds := ec2handler.CreateInstances(svc, imageId, instanceType, 1, count, 
+        keyName, securityGroupId, subnetid, instanceNamePrefix) 
 
     publicIPs := make([]*string, len(instanceIds))
 
@@ -250,9 +272,11 @@ func copyAndPlayAgent(serverIP string) error {
 	// some options are static for simple PoC.// some options are static for simple PoC.
         // These must be prepared before.
         userName := "ec2-user"
-        keyName := "/root/.aws/awspowerkimkeypair.pem"
         port := ":22"
         serverPort := serverIP + port
+
+        //keyName := "/root/.aws/awspowerkimkeypair.pem"
+        keyName := masterConfigInfos.AWS.KEYFILEPATH
 
         // file info to copy
         sourceFile := "/root/go/src/farmoni/farmoni_agent/farmoni_agent"
