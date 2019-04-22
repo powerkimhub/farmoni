@@ -65,7 +65,7 @@ func main() {
 	zone := "us-east1-b"
 	//zone := "asia-northeast1-c"
 
-	instanceName := "gce-powerkim-1"
+	instanceName := "gcepowerkim1"
 
 	rb := &compute.Instance{
 		MachineType:        prefix + "/zones/" + zone + "/machineTypes/f1-micro",
@@ -147,7 +147,7 @@ func main() {
 	}
 
 /* second insert continously
-	instanceName = "gce-powerkim-2"
+	instanceName = "gcepowerkim2"
 	rb.Name = instanceName
 	rb.Disks[0].InitializeParams.DiskName = "my-root-pd2"
 

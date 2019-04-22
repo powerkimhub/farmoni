@@ -9,6 +9,7 @@ package main
 import (
 	"flag"
 	"github.com/powerkimhub/farmoni/farmoni_master/ec2handler"
+	"github.com/powerkimhub/farmoni/farmoni_master/gcehandler"
 	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/scp"
 	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/sshrun"
 	"github.com/powerkimhub/farmoni/farmoni_master/etcdhandler"
@@ -46,6 +47,7 @@ var delServerNumGCP *int
 var serverlist *bool
 var monitoring *bool
 var delallServersAWS *bool
+var delallServersGCP *bool
 
 
 func parseRequest() {
@@ -62,7 +64,7 @@ func parseRequest() {
         delallServersAWS = flag.Bool("delallserversaws", false, "delete all servers in AWS: -delallserversaws")
 
         addServerNumGCP = flag.Int("addserversgcp", 0, "add servers in GCP: -addserversgcp=10")
-//       delServersNumGCP = flag.Int("delserversgcp", 0, "delete all servers in GCP: -delserversgcp=10")
+        delallServersGCP = flag.Bool("delallserversgcp", false, "delete all servers in GCP: -delallserversgcp")
 
         serverlist = flag.Bool("serverlist", false, "report server list: -serverlist")
         monitoring = flag.Bool("monitoring", false, "report all server' resources status: -monitoring")
@@ -96,7 +98,7 @@ func main() {
 	// to delete all servers in aws
         fmt.Println("")
         fmt.Println("$ go run farmoni_master.go -delallserversaws")
-        //fmt.Println("$ go run farmoni_master.go -delallserversgcp")
+        fmt.Println("$ go run farmoni_master.go -delallserversgcp")
         fmt.Println("")
         fmt.Println("$ go run farmoni_master.go -serverlist")
         fmt.Println("")
@@ -137,7 +139,10 @@ func main() {
                 fmt.Println("######### delete all servers in AWS....")
                 delAllServersAWS()
         }
-
+	if *delallServersGCP != false {
+                fmt.Println("######### delete all servers in GCP....")
+                delAllServersGCP()
+        }
 }
 
 
@@ -160,10 +165,13 @@ func addServersAWS(count int) {
 
     imageId := masterConfigInfos.AWS.IMAGEID  // ami-047f7b46bd6dd5d84
     instanceType := masterConfigInfos.AWS.INSTANCETYPE  // t2.micro
-    keyName := masterConfigInfos.AWS.KEYNAME  // aws.powerkim.keypair
     securityGroupId := masterConfigInfos.AWS.SECURITYGROUPID  // sg-2334584f
     subnetid := masterConfigInfos.AWS.SUBNETID  // subnet-8c4a53e4
     instanceNamePrefix := masterConfigInfos.AWS.INSTANCENAMEPREFIX  // powerkimInstance_
+
+    userName := masterConfigInfos.AWS.USERNAME  // ec2-user
+    keyName := masterConfigInfos.AWS.KEYNAME  // aws.powerkim.keypair
+    keyPath := masterConfigInfos.AWS.KEYFILEPATH  // /root/.aws/awspowerkimkeypair.pem
 
     //instanceIds := ec2handler.CreateInstances(svc, "ami-047f7b46bd6dd5d84", "t2.micro", 1, count,
     //   "aws.powerkim.keypair", "sg-2334584f", "subnet-8c4a53e4", "powerkimInstance_")
@@ -193,7 +201,7 @@ func addServersAWS(count int) {
 // 1.4. execute Servers' Agent.
     for _, v := range publicIPs {
 	    for i:=0; ; i++ {
-		err:=copyAndPlayAgent(*v)
+		err:=copyAndPlayAgent(*v, userName, keyPath)
 		if(i==30) { os.Exit(3) }
 		    if err == nil {
 			break;	
@@ -216,7 +224,8 @@ func delAllServersAWS() {
     idList := getInstanceIdListAWS()
 
 // (2) terminate all AWS servers
-    region := "ap-northeast-2" // seoul region.
+    //region := "ap-northeast-2" 
+    region := masterConfigInfos.AWS.REGION
 
     svc := ec2handler.Connect(region)
 
@@ -226,6 +235,29 @@ func delAllServersAWS() {
 
 // (3) remove all aws server list from etcd
     delProviderAllServersFromEtcd(string("aws"))
+}
+
+// (1) get all GCP server id list from etcd
+// (2) terminate all GCP servers
+// (3) remove server list from etcd
+func delAllServersGCP() {
+
+// (1) get all GCP server id list from etcd
+    idList := getInstanceIdListGCP()
+
+// (2) terminate all GCP servers
+    credentialFile := masterConfigInfos.GCP.CREDENTIALFILE
+    svc := gcehandler.Connect(credentialFile)
+
+//  destroy Servers(VMs).
+    zone := masterConfigInfos.GCP.ZONE
+    projectID := masterConfigInfos.GCP.PROJECTID
+fmt.Println("========>", *idList[0])
+    gcehandler.DestroyInstances(svc, zone, projectID, idList)
+
+
+// (3) remove all aws server list from etcd
+    delProviderAllServersFromEtcd(string("gcp"))
 }
 
 func addServersToEtcd(provider string, instanceIds []*string, serverIPs []*string) {
@@ -266,27 +298,28 @@ func delProviderAllServersFromEtcd(provider string) {
 }
 
 
-func copyAndPlayAgent(serverIP string) error {
+func copyAndPlayAgent(serverIP string, userName string, keyPath string) error {
 
         // server connection info
 	// some options are static for simple PoC.// some options are static for simple PoC.
         // These must be prepared before.
-        userName := "ec2-user"
+        //userName := "ec2-user"
         port := ":22"
         serverPort := serverIP + port
 
-        //keyName := "/root/.aws/awspowerkimkeypair.pem"
-        keyName := masterConfigInfos.AWS.KEYFILEPATH
+        //keyPath := "/root/.aws/awspowerkimkeypair.pem"
+        //keyPath := masterConfigInfos.AWS.KEYFILEPATH
 
         // file info to copy
-        sourceFile := "/root/go/src/farmoni/farmoni_agent/farmoni_agent"
+        //sourceFile := "/root/go/src/farmoni/farmoni_agent/farmoni_agent"
+        sourceFile := "/root/go/src/github.com/powerkimhub/farmoni/farmoni_agent/farmoni_agent"
         targetFile := "/tmp/farmoni_agent"
 
         // command for ssh run
         cmd := "/tmp/farmoni_agent &"
 
         // Connect to the server for scp
-        scpCli, err := scp.Connect(userName, keyName, serverPort)
+        scpCli, err := scp.Connect(userName, keyPath, serverPort)
         if err != nil {
                 fmt.Println("Couldn't establisch a connection to the remote server ", err)
                 return err
@@ -303,7 +336,7 @@ func copyAndPlayAgent(serverIP string) error {
 
 
         // Connect to the server for ssh
-        sshCli, err := sshrun.Connect(userName, keyName, serverPort)
+        sshCli, err := sshrun.Connect(userName, keyPath, serverPort)
         if err != nil {
                 fmt.Println("Couldn't establisch a connection to the remote server ", err)
                 return err
@@ -320,7 +353,95 @@ func copyAndPlayAgent(serverIP string) error {
 }
 
 
+// 1.1. create Servers(VM).
+// 1.2. get servers' public IP.
+// 1.3. insert Farmoni Agent into Servers.
+// 1.4. execute Servers' Agent.
+// 1.5. add server list into etcd.
 func addServersGCP(count int) {
+// ==> GCP-GCE
+
+
+    credentialFile := "/root/.gcp/credentials"
+    svc := gcehandler.Connect(credentialFile)
+
+    region := "us-east1"
+    zone := "us-east1-c"
+    projectID := "ornate-course-236606"
+    prefix := "https://www.googleapis.com/compute/v1/projects/" + projectID
+    imageURL := "projects/gce-uefi-images/global/images/centos-7-v20190326"
+    machineType := prefix + "/zones/" + zone + "/machineTypes/f1-micro"
+    subNetwork := prefix + "/regions/us-east1/subnetworks/default"
+    networkName := prefix + "/global/networks/default"
+    serviceAccoutsMail := "default"
+    //baseName := "powerkimInstance"
+    baseName := "gcepowerkim"
+
+    userName := "byoungseob"
+    keyPath := "/root/.gcp/gcppowerkimkeypair.pem"
+
+/*
+    credentialFile := masterConfigInfos.GCP.CREDENTIALFILE
+    svc := gcehandler.Connect(crdentialFile)
+
+// 1.1. create Servers(VM).
+    // some options are static for simple PoC.
+    // These must be prepared before.
+    region := masterConfigInfos.GCP.REGION
+    zone := masterConfigInfos.GCP.ZONE
+    projectID := masterConfigInfos.GCP.PROJECTID
+    prefix := masterConfigInfos.GCP.PREFIX
+    imageURL := masterConfigInfos.GCP.IMAGEID
+    machineType := masterConfigInfos.GCP.INSTANCETYPE
+    subNetwork := masterConfigInfos.GCP.SUBNETID
+    networkName := masterConfigInfos.GCP.NETWORKNAME
+    serviceAccoutsMail := masterConfigInfos.GCP.SERVICEACCOUTSMAIL
+    baseName := masterConfigInfos.GCP.INSTANCENAMEPREFIX
+
+    userName := masterConfigInfos.GCP.USERNAME  // byoungseob
+    keyPath := masterConfigInfos.GCP.KEYFILEPATH  // /root/.gcp/gcppowerkimkeypair.pem
+*/
+    instanceIds := gcehandler.CreateInstances(svc, region, zone, projectID, imageURL, machineType, 1, count,
+        subNetwork, networkName, serviceAccoutsMail, baseName)
+
+    for _, v := range instanceIds {
+        fmt.Println("\tInstanceName: ", *v)
+    }
+
+fmt.Println("===========> ")
+
+    publicIPs := make([]*string, len(instanceIds))
+// 1.2. get servers' public IP.
+    // waiting for completion of new instance running.
+    // after then, can get publicIP.
+    for k, v := range instanceIds {
+            // wait until running status
+
+        fmt.Println("===========> ", svc, zone, projectID, *v)
+            gcehandler.WaitForRun(svc, zone, projectID, *v)
+
+            // get public IP
+            publicIP := gcehandler.GetPublicIP(svc, zone, projectID, *v)
+            fmt.Println("==============> " + publicIP);
+            publicIPs[k] = &publicIP
+    }
+
+// 1.3. insert Farmoni Agent into Servers.
+// 1.4. execute Servers' Agent.
+    for _, v := range publicIPs {
+            for i:=0; ; i++ {
+                err:=copyAndPlayAgent(*v, userName, keyPath)
+                if(i==30) { os.Exit(3) }
+                    if err == nil {
+                        break;
+                    }
+                    // need to load SSH Service on the VM
+                    time.Sleep(time.Second*3)
+            } // end of for
+    } // end of for
+
+// 1.5. add server list into etcd.
+    addServersToEtcd("gcp", instanceIds, publicIPs)
 }
 
 func serverList() {
@@ -360,6 +481,20 @@ func getInstanceIdListAWS() []*string {
         return etcdhandler.InstanceIDListAWS(ctx, etcdcli)
 }
 
+func getInstanceIdListGCP() []*string {
+        etcdcli, err := etcdhandler.Connect(etcdServerPort)
+        if err != nil {
+                panic(err)
+        }
+        fmt.Println("connected to etcd - " + *etcdServerPort)
+
+        defer etcdhandler.Close(etcdcli)
+
+        ctx := context.Background()
+        return etcdhandler.InstanceIDListGCP(ctx, etcdcli)
+}
+
+
 func monitoringAll() {
 
 	for {
@@ -368,7 +503,6 @@ func monitoringAll() {
 			monitoringServer(*v)
 			println("-----------")
 		}
-
                 println("==============================")
 		time.Sleep(time.Second)
 	} // end of for

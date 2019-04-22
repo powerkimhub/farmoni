@@ -13,7 +13,7 @@ import (
     "google.golang.org/api/googleapi"
     "golang.org/x/oauth2/jwt"
 
-    _ "fmt"
+    "fmt"
     "os"
     "log"
     "strings"
@@ -151,13 +151,13 @@ func CreateInstances(computeService *compute.Service, region string, zone string
 		rb := getRequestBody(instanceName, region, zone, projectID, imageURL, machineType,
 			diskName, minCount, maxCount, subNetwork, networkName, serviceAccoutsMail)
 
-		_, err := computeService.Instances.Insert(projectID, zone, rb).Context(ctx).Do()
+		resp, err := computeService.Instances.Insert(projectID, zone, rb).Context(ctx).Do()
 		if err != nil {
 			log.Fatal(err)
 		}
-//		fmt.Printf("%#v\n", resp)
+		fmt.Printf("%#v\n", resp)
 		instanceIds[i] = &instanceName
-/*
+
 		inst, err := computeService.Instances.Get(projectID, zone, instanceName).Context(ctx).Do()
 		log.Printf("Got compute.Instance, err: %#v, %v", inst, err)
 		if googleapi.IsNotModified(err) {
@@ -165,7 +165,7 @@ func CreateInstances(computeService *compute.Service, region string, zone string
 		} else {
 			log.Printf("Instance modified since insert.")
 		}
-*/
+
 	}
 	
 	return instanceIds 
@@ -176,7 +176,11 @@ func GetPublicIP(computeService *compute.Service, zone string, projectID string,
 	ctx := context.Background()
 
 	inst, err := computeService.Instances.Get(projectID, zone, instanceName).Context(ctx).Do()
-	//log.Printf("Got compute.Instance, err: %#v, %v", inst, err)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	 //log.Printf("Got compute.Instance, err: %#v, %v", inst, err)
 	if googleapi.IsNotModified(err) {
 		log.Printf("Instance not modified since insert.")
 	} else {

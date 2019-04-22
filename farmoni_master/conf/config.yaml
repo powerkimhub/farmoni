@@ -6,20 +6,39 @@ etcdserverport: "129.254.175.43:2379"
 ## Config for AWS ##
 aws:
 
-# path of key file.
-  keyfilepath: /root/.aws/awspowerkimkeypair.pem 
-
 # Infos of Region
   region: ap-northeast-2
-
 # Infos for creating Instnaces
   imageid: ami-047f7b46bd6dd5d84 
-  instancenameprefix: powerkimInstance_  # EC2's Tag Name for group instances' ID
+  instancenameprefix: awspowerkim  # EC2's Tag Name for group instances' ID
   instancetype: t2.micro
-  keyname: aws.powerkim.keypair
   securitygroupid: sg-2334584f
   subnetid: subnet-8c4a53e4
+# for VM
+  username: ec2-user
+  keyname: aws.powerkim.keypair
+  keyfilepath: /root/.aws/awspowerkimkeypair.pem 
 
 
 ## Config for GCP ##
-# will be added config for GCP
+gcp:
+
+# for credential
+  credentialfile: /root/.gcp/credentials
+# Infos of Region
+  region: us-east1
+  zone: us-east1-c
+# Project & Prefix for GCP
+  projectid: ornate-course-236606
+  prefix: https://www.googleapis.com/compute/v1/projects/ornate-course-236606
+# Infos for creating Instnaces
+  imageid: projects/gce-uefi-images/global/images/centos-7-v20190326
+  instancenameprefix: gcepowerkim
+  instancetype: https://www.googleapis.com/compute/v1/projects/ornate-course-236606/zones/us-east1-b/machineTypes/f1-micro
+  subnetid: https://www.googleapis.com/compute/v1/projects/ornate-course-236606/regions/us-east1/subnetworks/default
+  networkname: https://www.googleapis.com/compute/v1/projects/ornate-course-236606/global/networks/default
+  serviceAccoutsMail: default
+# for VM
+  username: byoungseob
+  keyname: empty
+  keyfilepath: /root/.gcp/gcppowerkimkeypair.pem 

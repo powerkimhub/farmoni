@@ -18,7 +18,7 @@ package main
     svc := gcehandler.Connect(credentialFile)
 
     region := "us-east1"
-    zone := "us-east1-b"
+    zone := "us-east1-c"
     projectID := "ornate-course-236606"
     prefix := "https://www.googleapis.com/compute/v1/projects/" + projectID
     imageURL := "projects/gce-uefi-images/global/images/centos-7-v20190326"
@@ -27,7 +27,7 @@ package main
     networkName := prefix + "/global/networks/default"
     serviceAccoutsMail := "default"
     //baseName := "powerkimInstance"
-    baseName := "gce-powerkim-"
+    baseName := "gcepowerkim"
 
     instanceIds := gcehandler.CreateInstances(svc, region, zone, projectID, imageURL, machineType, 1, 2,
         subNetwork, networkName, serviceAccoutsMail, baseName)
@@ -35,7 +35,6 @@ package main
     for _, v := range instanceIds {
 	fmt.Println("\tInstanceName: ", *v)
     }
-
 
     // waiting for completion of new instance running.
     for _, v := range instanceIds {

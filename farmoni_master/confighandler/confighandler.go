@@ -21,14 +21,36 @@ import (
 type MASTERCONFIGTYPE struct {
         ETCDSERVERPORT string
         AWS struct {
-                KEYFILEPATH string
                 REGION string
                 IMAGEID string
                 INSTANCENAMEPREFIX string
                 INSTANCETYPE string
-                KEYNAME string
                 SECURITYGROUPID string
                 SUBNETID string
+
+                USERNAME string
+                KEYNAME string
+                KEYFILEPATH string
+        }
+
+        GCP struct {
+                CREDENTIALFILE string
+                REGION string
+                ZONE string
+                PROJECTID string
+                PREFIX string
+
+                IMAGEID string
+                INSTANCENAMEPREFIX string
+                INSTANCETYPE string
+                SECURITYGROUPID string
+                SUBNETID string
+                NETWORKNAME string
+                SERVICEACCOUTSMAIL string
+
+                USERNAME string
+                KEYNAME string
+                KEYFILEPATH string
         }
 }
 
