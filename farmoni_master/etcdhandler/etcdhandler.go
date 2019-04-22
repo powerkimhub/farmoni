@@ -83,7 +83,7 @@ func DelProviderServer(ctx context.Context, cli *clientv3.Client, provider *stri
 func DelProviderAllServers(ctx context.Context, cli *clientv3.Client, provider *string) {
 	// delete all list of /server/aws's key with prefix
         _, err:=cli.Delete(ctx, "/server/" + *provider, clientv3.WithPrefix())
-        fmt.Println("deleted all aws server list...\n")
+        fmt.Println("deleted all %s server list...\n", *provider)
         if err != nil {
                 log.Fatal(err)
         }

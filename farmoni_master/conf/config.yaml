@@ -34,7 +34,7 @@ gcp:
 # Infos for creating Instnaces
   imageid: projects/gce-uefi-images/global/images/centos-7-v20190326
   instancenameprefix: gcepowerkim
-  instancetype: https://www.googleapis.com/compute/v1/projects/ornate-course-236606/zones/us-east1-b/machineTypes/f1-micro
+  instancetype: https://www.googleapis.com/compute/v1/projects/ornate-course-236606/zones/us-east1-c/machineTypes/f1-micro
   subnetid: https://www.googleapis.com/compute/v1/projects/ornate-course-236606/regions/us-east1/subnetworks/default
   networkname: https://www.googleapis.com/compute/v1/projects/ornate-course-236606/global/networks/default
   serviceAccoutsMail: default

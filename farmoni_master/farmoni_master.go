@@ -361,7 +361,7 @@ func copyAndPlayAgent(serverIP string, userName string, keyPath string) error {
 func addServersGCP(count int) {
 // ==> GCP-GCE
 
-
+/*
     credentialFile := "/root/.gcp/credentials"
     svc := gcehandler.Connect(credentialFile)
 
@@ -379,10 +379,11 @@ func addServersGCP(count int) {
 
     userName := "byoungseob"
     keyPath := "/root/.gcp/gcppowerkimkeypair.pem"
+*/
 
-/*
+
     credentialFile := masterConfigInfos.GCP.CREDENTIALFILE
-    svc := gcehandler.Connect(crdentialFile)
+    svc := gcehandler.Connect(credentialFile)
 
 // 1.1. create Servers(VM).
     // some options are static for simple PoC.
@@ -390,7 +391,7 @@ func addServersGCP(count int) {
     region := masterConfigInfos.GCP.REGION
     zone := masterConfigInfos.GCP.ZONE
     projectID := masterConfigInfos.GCP.PROJECTID
-    prefix := masterConfigInfos.GCP.PREFIX
+    //prefix := masterConfigInfos.GCP.PREFIX
     imageURL := masterConfigInfos.GCP.IMAGEID
     machineType := masterConfigInfos.GCP.INSTANCETYPE
     subNetwork := masterConfigInfos.GCP.SUBNETID
@@ -400,7 +401,7 @@ func addServersGCP(count int) {
 
     userName := masterConfigInfos.GCP.USERNAME  // byoungseob
     keyPath := masterConfigInfos.GCP.KEYFILEPATH  // /root/.gcp/gcppowerkimkeypair.pem
-*/
+
     instanceIds := gcehandler.CreateInstances(svc, region, zone, projectID, imageURL, machineType, 1, count,
         subNetwork, networkName, serviceAccoutsMail, baseName)
 
