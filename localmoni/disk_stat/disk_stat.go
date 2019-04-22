@@ -20,7 +20,7 @@
          }
  }
 
- // return partition list, except /boot or same partition(like /dev/sda3=/var/lib/docker)
+ // return partition list
  func GetPartitionList() []string {
 	ret, err := disk.Partitions(false)
 	dealwithErr(err)
@@ -36,7 +36,7 @@
 			fmt.Println("Could not get device info")
 		}else {
 			if(len(strUniqPartiionList)==0) {
-				if(disk.Mountpoint=="/boot") { continue }
+				// if(disk.Mountpoint=="/boot") { continue } // except /boot, now no-ops
 				strUniqPartiionList = append(strUniqPartiionList, disk.Device)
 			}else {
 				var exist bool=false

@@ -51,46 +51,39 @@
 
 
  func main() {
-	// get Host Name
-	hostname, _ := os.Hostname()
+        // get Host Name
+        hostname, _ := os.Hostname()
 
-	var readBytes [] uint64 = make([]uint64, 1)
-	var writeBytes [] uint64 = make([]uint64, 1)
-	var beforeReadBytes [] uint64 = make([]uint64, 1)
-	var beforeWriteBytes [] uint64 = make([]uint64, 1)
+        var readBytes [] uint64 = make([]uint64, 2)
+        var writeBytes [] uint64 = make([]uint64, 2)
+        var beforeReadBytes [] uint64 = make([]uint64, 2)
+        var beforeWriteBytes [] uint64 = make([]uint64, 2)
 
-	for{
-		println("[" + hostname + "]")
-		cpu()
-		println("")
+        for{
+                println("[" + hostname + "]")
+                cpu()
+                println("")
 
-		mem()
+                mem()
 
-		print("  [DSK RAT]")
-		// get effective partion list
-		partitionList := diskstat.GetPartitionList()
-		for i, partition := range partitionList {
-			print(partition + ": ")
-			if(len(readBytes)<(i+1)) {
-				rBytes, wBytes := diskstat.GetRWBytes(partition)
-				readBytes = append(readBytes, rBytes)
-				writeBytes = append(writeBytes, wBytes)
-			}else{
-				readBytes[i], writeBytes[i] = diskstat.GetRWBytes(partition)
+                print("  [DSK RAT]")
+                // get effective partion list
+                partitionList := diskstat.GetPartitionList()
+                for i, partition := range partitionList {
+                        print(partition + ": ")
+			readBytes[i], writeBytes[i] = diskstat.GetRWBytes(partition)
+                        print("R/s:   " + strconv.FormatUint(readBytes[i]-beforeReadBytes[i], 10))
+                        print(", W/s:   " + strconv.FormatUint(writeBytes[i]-beforeWriteBytes[i], 10))
+
+			beforeReadBytes[i] = readBytes[i]
+			beforeWriteBytes[i] = writeBytes[i]
+			if(i<(len(partitionList))) {
+				print("\t")
 			}
-			print("R/s:   " + strconv.FormatUint(readBytes[i]-beforeReadBytes[i], 10))
-			println(", W/s:   " + strconv.FormatUint(writeBytes[i]-beforeWriteBytes[i], 10))
-
-			if(len(readBytes)<(i+1)) {
-				beforeReadBytes = append(beforeReadBytes, readBytes[i])
-				beforeWriteBytes = append(beforeWriteBytes, writeBytes[i])
-			}else {
-				beforeReadBytes[i] = readBytes[i]
-				beforeWriteBytes[i] = writeBytes[i]
-			}
-		}
-		println("-----------")
-		time.Sleep(time.Second)	
-	}
+                }
+                println("\n-----------")
+                time.Sleep(time.Second)
+        }
 
  }
+

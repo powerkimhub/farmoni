@@ -60,10 +60,10 @@ import (
  }
 
  // for global variables of disk statistics
- var readBytes [] uint64 = make([]uint64, 1)
- var writeBytes [] uint64 = make([]uint64, 1)
- var beforeReadBytes [] uint64 = make([]uint64, 1)
- var beforeWriteBytes [] uint64 = make([]uint64, 1)
+ var readBytes [] uint64 = make([]uint64, 2)
+ var writeBytes [] uint64 = make([]uint64, 2)
+ var beforeReadBytes [] uint64 = make([]uint64, 2)
+ var beforeWriteBytes [] uint64 = make([]uint64, 2)
 
  func dsk() string {
 
@@ -73,23 +73,17 @@ import (
 	partitionList := diskstat.GetPartitionList()
 	for i, partition := range partitionList {
 		dsk_stat = dsk_stat + partition + ": "
-		if(len(readBytes)<(i+1)) {
-			rBytes, wBytes := diskstat.GetRWBytes(partition)
-			readBytes = append(readBytes, rBytes)
-			writeBytes = append(writeBytes, wBytes)
-		}else{
-			readBytes[i], writeBytes[i] = diskstat.GetRWBytes(partition)
-		}
+		readBytes[i], writeBytes[i] = diskstat.GetRWBytes(partition)
 		dsk_stat = dsk_stat + "R/s:   " + strconv.FormatUint(readBytes[i]-beforeReadBytes[i], 10)
 		dsk_stat = dsk_stat + ", W/s:   " + strconv.FormatUint(writeBytes[i]-beforeWriteBytes[i], 10)
 
-		if(len(readBytes)<(i+1)) {
-			beforeReadBytes = append(beforeReadBytes, readBytes[i])
-			beforeWriteBytes = append(beforeWriteBytes, writeBytes[i])
-		}else {
-			beforeReadBytes[i] = readBytes[i]
-			beforeWriteBytes[i] = writeBytes[i]
+		beforeReadBytes[i] = readBytes[i]
+		beforeWriteBytes[i] = writeBytes[i]
+
+		if(i<(len(partitionList))) {
+			dsk_stat = dsk_stat + "\t"
 		}
+		
 	}
 	return dsk_stat
 
