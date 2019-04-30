@@ -38,16 +38,16 @@ var fetchType *string
 var addServer *string
 var delServer *string
 
-var addServerNumAWS *int
+var addVMNumAWS *int
 var delServerNumAWS *int
 
-var addServerNumGCP *int
+var addVMNumGCP *int
 var delServerNumGCP *int
 
-var serverlist *bool
+var listvm *bool
 var monitoring *bool
-var delallServersAWS *bool
-var delallServersGCP *bool
+var delVMAWS *bool
+var delVMGCP *bool
 
 
 func parseRequest() {
@@ -60,13 +60,13 @@ func parseRequest() {
         addServer = flag.String("addserver", "none", "add a server: -addserver=192.168.0.10:5000")
         delServer = flag.String("delserver", "none", "delete a server: -delserver=192.168.0.10")
 */
-        addServerNumAWS = flag.Int("addserversaws", 0, "add servers in AWS: -addserversaws=10")
-        delallServersAWS = flag.Bool("delallserversaws", false, "delete all servers in AWS: -delallserversaws")
+        addVMNumAWS = flag.Int("addvm-aws", 0, "add servers in AWS: -addvm-aws=10")
+        delVMAWS = flag.Bool("delvm-aws", false, "delete all servers in AWS: -delvm-aws")
 
-        addServerNumGCP = flag.Int("addserversgcp", 0, "add servers in GCP: -addserversgcp=10")
-        delallServersGCP = flag.Bool("delallserversgcp", false, "delete all servers in GCP: -delallserversgcp")
+        addVMNumGCP = flag.Int("addvm-gcp", 0, "add servers in GCP: -addvm-gcp=10")
+        delVMGCP = flag.Bool("delvm-gcp", false, "delete all servers in GCP: -delvm-gcp")
 
-        serverlist = flag.Bool("serverlist", false, "report server list: -serverlist")
+        listvm = flag.Bool("listvm", false, "report server list: -listvm")
         monitoring = flag.Bool("monitoring", false, "report all server' resources status: -monitoring")
 
         flag.Parse()
@@ -91,16 +91,17 @@ func parseRequest() {
 //<delete all servers inAWS/GCP>
 func main() {
 
-        fmt.Println("$ go run farmoni_master.go -addserversaws=10")
-        fmt.Println("$ go run farmoni_master.go -monitoring")
-        fmt.Println("$ go run farmoni_master.go -addserversgcp=5")
+        fmt.Println("## examples ##")
+        fmt.Println("go run farmoni_master.go -addvm-aws=10")
+        fmt.Println("go run farmoni_master.go -addvm-gcp=5")
+        fmt.Println("")
+        fmt.Println("go run farmoni_master.go -listvm")
+        fmt.Println("go run farmoni_master.go -monitoring")
 
 	// to delete all servers in aws
         fmt.Println("")
-        fmt.Println("$ go run farmoni_master.go -delallserversaws")
-        fmt.Println("$ go run farmoni_master.go -delallserversgcp")
-        fmt.Println("")
-        fmt.Println("$ go run farmoni_master.go -serverlist")
+        fmt.Println("go run farmoni_master.go -delvm-aws")
+        fmt.Println("go run farmoni_master.go -delvm-gcp")
         fmt.Println("")
 
 // load config
@@ -115,16 +116,16 @@ func main() {
 
 //<add servers in AWS/GCP>
 	// 1.1. create Servers(VM).
-	if *addServerNumAWS != 0 {
-                fmt.Println("######### addServersAWS....")
-                addServersAWS(*addServerNumAWS)
+	if *addVMNumAWS != 0 {
+                fmt.Println("######### addVMaws....")
+                addVMaws(*addVMNumAWS)
         }
-	if *addServerNumGCP != 0 {
+	if *addVMNumGCP != 0 {
                 fmt.Println("######### addServersGCP....")
-                addServersGCP(*addServerNumGCP)
+                addServersGCP(*addVMNumGCP)
         }
 //<get all server list>
-	if *serverlist != false {
+	if *listvm != false {
                 //fmt.Println("######### list of all servers....")
                 serverList()
         }
@@ -135,11 +136,11 @@ func main() {
         }
 
 //<delete all servers inAWS/GCP>
-	if *delallServersAWS != false {
+	if *delVMAWS != false {
                 fmt.Println("######### delete all servers in AWS....")
                 delAllServersAWS()
         }
-	if *delallServersGCP != false {
+	if *delVMGCP != false {
                 fmt.Println("######### delete all servers in GCP....")
                 delAllServersGCP()
         }
@@ -152,7 +153,7 @@ func main() {
 // 1.3. insert Farmoni Agent into Servers.
 // 1.4. execute Servers' Agent.
 // 1.5. add server list into etcd.
-func addServersAWS(count int) {
+func addVMaws(count int) {
 // ==> AWS-EC2
     //region := "ap-northeast-2" // seoul region.
     region := masterConfigInfos.AWS.REGION // seoul region.
