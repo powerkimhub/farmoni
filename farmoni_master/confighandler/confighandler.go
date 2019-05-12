@@ -52,6 +52,25 @@ type MASTERCONFIGTYPE struct {
                 KEYNAME string
                 KEYFILEPATH string
         }
+
+        AZURE struct {
+                CREDENTIALFILE string
+                GROUPNAME string
+                LOCATION string
+                VIRTUALNETWORKNAME string
+                SUBNET1NAME string
+                SUBNET2NAME string
+                NETWORKSECURITYGROUPNAME string
+//                IPNAME string
+//                NICNAME string
+                BASENAME string
+
+                USERNAME string
+                PASSWORD string
+                KEYFILEPATH string
+                PUBLICKEYFILEPATH string
+
+	}
 }
 
 func readConfigFile(filePath string) ([]byte, error) {

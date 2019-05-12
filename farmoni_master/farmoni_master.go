@@ -10,6 +10,7 @@ import (
 	"flag"
 	"github.com/powerkimhub/farmoni/farmoni_master/ec2handler"
 	"github.com/powerkimhub/farmoni/farmoni_master/gcehandler"
+	"github.com/powerkimhub/farmoni/farmoni_master/azurehandler"
 	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/scp"
 	"github.com/powerkimhub/farmoni/farmoni_master/serverhandler/sshrun"
 	"github.com/powerkimhub/farmoni/farmoni_master/etcdhandler"
@@ -44,10 +45,13 @@ var delServerNumAWS *int
 var addVMNumGCP *int
 var delServerNumGCP *int
 
+var addVMNumAZURE *int
+
 var listvm *bool
 var monitoring *bool
 var delVMAWS *bool
 var delVMGCP *bool
+var delVMAZURE *bool
 
 
 func parseRequest() {
@@ -65,6 +69,9 @@ func parseRequest() {
 
         addVMNumGCP = flag.Int("addvm-gcp", 0, "add servers in GCP: -addvm-gcp=10")
         delVMGCP = flag.Bool("delvm-gcp", false, "delete all servers in GCP: -delvm-gcp")
+
+        addVMNumAZURE = flag.Int("addvm-azure", 0, "add servers in AZURE: -addvm-azure=10")
+        delVMAZURE = flag.Bool("delvm-azure", false, "delete all servers in AZURE: -delvm-azure")
 
         listvm = flag.Bool("listvm", false, "report server list: -listvm")
         monitoring = flag.Bool("monitoring", false, "report all server' resources status: -monitoring")
@@ -94,6 +101,7 @@ func main() {
         fmt.Println("## examples ##")
         fmt.Println("go run farmoni_master.go -addvm-aws=10")
         fmt.Println("go run farmoni_master.go -addvm-gcp=5")
+        fmt.Println("go run farmoni_master.go -addvm-azure=5")
         fmt.Println("")
         fmt.Println("go run farmoni_master.go -listvm")
         fmt.Println("go run farmoni_master.go -monitoring")
@@ -102,6 +110,7 @@ func main() {
         fmt.Println("")
         fmt.Println("go run farmoni_master.go -delvm-aws")
         fmt.Println("go run farmoni_master.go -delvm-gcp")
+        fmt.Println("go run farmoni_master.go -delvm-azure")
         fmt.Println("")
 
 // load config
@@ -114,16 +123,21 @@ func main() {
 	parseRequest()
 
 
-//<add servers in AWS/GCP>
+//<add servers in AWS/GCP/AZURE>
 	// 1.1. create Servers(VM).
 	if *addVMNumAWS != 0 {
                 fmt.Println("######### addVMaws....")
                 addVMaws(*addVMNumAWS)
         }
 	if *addVMNumGCP != 0 {
-                fmt.Println("######### addServersGCP....")
-                addServersGCP(*addVMNumGCP)
+                fmt.Println("######### addVMgcp....")
+                addVMgcp(*addVMNumGCP)
         }
+	if *addVMNumAZURE != 0 {
+                fmt.Println("######### addVMazure....")
+                addVMazure(*addVMNumAZURE)
+        }
+
 //<get all server list>
 	if *listvm != false {
                 //fmt.Println("######### list of all servers....")
@@ -135,14 +149,18 @@ func main() {
                 monitoringAll()
         }
 
-//<delete all servers inAWS/GCP>
+//<delete all servers inAWS/GCP/AZURE>
 	if *delVMAWS != false {
                 fmt.Println("######### delete all servers in AWS....")
-                delAllServersAWS()
+                delAllVMaws()
         }
 	if *delVMGCP != false {
                 fmt.Println("######### delete all servers in GCP....")
-                delAllServersGCP()
+                delAllVMgcp()
+        }
+	if *delVMAZURE != false {
+                fmt.Println("######### delete all servers in AZURE....")
+                delAllVMazure()
         }
 }
 
@@ -219,7 +237,7 @@ func addVMaws(count int) {
 // (1) get all AWS server id list from etcd
 // (2) terminate all AWS servers
 // (3) remove server list from etcd
-func delAllServersAWS() {
+func delAllVMaws() {
 
 // (1) get all AWS server id list from etcd
     idList := getInstanceIdListAWS()
@@ -241,7 +259,7 @@ func delAllServersAWS() {
 // (1) get all GCP server id list from etcd
 // (2) terminate all GCP servers
 // (3) remove server list from etcd
-func delAllServersGCP() {
+func delAllVMgcp() {
 
 // (1) get all GCP server id list from etcd
     idList := getInstanceIdListGCP()
@@ -250,16 +268,38 @@ func delAllServersGCP() {
     credentialFile := masterConfigInfos.GCP.CREDENTIALFILE
     svc := gcehandler.Connect(credentialFile)
 
-//  destroy Servers(VMs).
+//  destroy all Servers(VMs).
     zone := masterConfigInfos.GCP.ZONE
     projectID := masterConfigInfos.GCP.PROJECTID
-fmt.Println("========>", *idList[0])
     gcehandler.DestroyInstances(svc, zone, projectID, idList)
 
 
 // (3) remove all aws server list from etcd
     delProviderAllServersFromEtcd(string("gcp"))
 }
+
+// (1) get all AZURE server id list from etcd
+// (2) terminate all AZURE servers
+// (3) remove server list from etcd
+func delAllVMazure() {
+
+// (1) get all AZURE server id list from etcd
+    // idList := getInstanceIdListAZURE()
+
+// (2) terminate all AZURE servers
+    credentialFile := masterConfigInfos.AZURE.CREDENTIALFILE
+    connInfo := azurehandler.Connect(credentialFile)
+
+//  destroy all Servers(VMs).
+    groupName := masterConfigInfos.AZURE.GROUPNAME
+//    azurehandler.DestroyInstances(connInfo, groupName, idList)  @todo now, just delete target Group for convenience.
+    azurehandler.DeleteGroup(connInfo, groupName)
+
+
+// (3) remove all aws server list from etcd
+    delProviderAllServersFromEtcd(string("azure"))
+}
+
 
 func addServersToEtcd(provider string, instanceIds []*string, serverIPs []*string) {
 
@@ -359,7 +399,7 @@ func copyAndPlayAgent(serverIP string, userName string, keyPath string) error {
 // 1.3. insert Farmoni Agent into Servers.
 // 1.4. execute Servers' Agent.
 // 1.5. add server list into etcd.
-func addServersGCP(count int) {
+func addVMgcp(count int) {
 // ==> GCP-GCE
 
 /*
@@ -410,7 +450,6 @@ func addServersGCP(count int) {
         fmt.Println("\tInstanceName: ", *v)
     }
 
-fmt.Println("===========> ")
 
     publicIPs := make([]*string, len(instanceIds))
 // 1.2. get servers' public IP.
@@ -445,6 +484,165 @@ fmt.Println("===========> ")
 // 1.5. add server list into etcd.
     addServersToEtcd("gcp", instanceIds, publicIPs)
 }
+
+
+// 1.1. create Servers(VM).
+// 1.2. get servers' public IP.
+// 1.3. insert Farmoni Agent into Servers.
+// 1.4. execute Servers' Agent.
+// 1.5. add server list into etcd.
+func addVMazure(count int) {
+// ==> AZURE-Compute
+
+/*
+const (
+        groupName = "VMGroupName"
+        location = "westus2"
+        virtualNetworkName = "virtualNetworkName"
+        subnet1Name = "subnet1Name"
+        subnet2Name = "subnet2Name"
+        nsgName = "nsgName"
+        ipName = "ipName"
+        nicName = "nicName"
+
+        baseName = "azurepowerkim"
+        vmUserName = "powerkim"
+        vmPassword = "powerkim"
+	keyPath := "/root/.azure/azurepowerkimkeypair.pem"
+        sshPublicKeyPath = "/root/.azure/azurepublickey.pem"
+)
+*/
+
+
+    credentialFile := masterConfigInfos.AZURE.CREDENTIALFILE
+    connInfo := azurehandler.Connect(credentialFile)
+
+// 1.1. create Servers(VM).
+    // some options are static for simple PoC.
+    // These must be prepared before.
+	groupName := masterConfigInfos.AZURE.GROUPNAME
+        location := masterConfigInfos.AZURE.LOCATION
+        virtualNetworkName := masterConfigInfos.AZURE.VIRTUALNETWORKNAME
+        subnet1Name := masterConfigInfos.AZURE.SUBNET1NAME
+        subnet2Name := masterConfigInfos.AZURE.SUBNET2NAME
+        nsgName := masterConfigInfos.AZURE.NETWORKSECURITYGROUPNAME
+//        ipName := masterConfigInfos.AZURE.IPNAME
+//        nicName := masterConfigInfos.AZURE.NICNAME
+
+        baseName := masterConfigInfos.AZURE.BASENAME
+        vmUserName := masterConfigInfos.AZURE.USERNAME
+        vmPassword := masterConfigInfos.AZURE.PASSWORD
+        KeyPath := masterConfigInfos.AZURE.KEYFILEPATH
+        sshPublicKeyPath := masterConfigInfos.AZURE.PUBLICKEYFILEPATH
+
+
+        _, err := azurehandler.CreateGroup(connInfo, groupName, location)
+        if err != nil {
+                fmt.Println(err.Error())
+        }
+        _, err = azurehandler.CreateVirtualNetworkAndSubnets(connInfo, groupName, location, virtualNetworkName, subnet1Name, subnet2Name)
+
+        if err != nil {
+                fmt.Println(err.Error())
+        }
+        fmt.Println("created vnet and 2 subnets")
+
+        _, err = azurehandler.CreateNetworkSecurityGroup(connInfo, groupName, location, nsgName)
+        if err != nil {
+                fmt.Println(err.Error())
+        }
+        fmt.Println("created network security group")
+
+/* PublicIP & NIC is made in CreateInstnaces()
+        _, err = azurehandler.CreatePublicIP(connInfo, groupName, location, ipName)
+        if err != nil {
+                fmt.Println(err.Error())
+        }
+        fmt.Println("created public IP")
+        _, err = azurehandler.CreateNIC(connInfo, groupName, location, virtualNetworkName, subnet1Name, nsgName, ipName, nicName)
+        if err != nil {
+                fmt.Println(err.Error())
+        }
+        fmt.Println("created nic")
+*/
+
+
+/*
+type ImageInfo struct {
+        Publisher string
+        Offer     string
+        Sku       string
+        Version   string
+}
+*/
+        imageInfo := azurehandler.ImageInfo{"Canonical", "UbuntuServer", "16.04.0-LTS", "latest"}
+
+/*
+type VMInfo struct {
+        UserName string
+        Password string
+        SshPublicKeyPath string
+}
+*/
+    vmInfo := azurehandler.VMInfo{vmUserName, vmPassword, sshPublicKeyPath}
+
+/*
+type NICInfo struct {
+        VirtualNetworkName string
+        SubnetName string
+        NetworkSecurityGroup string
+}
+*/
+
+    nicInfo := azurehandler.NICInfo{virtualNetworkName, subnet1Name, nsgName}
+
+    instanceIds := azurehandler.CreateInstances(connInfo, groupName, location, baseName, nicInfo, imageInfo, vmInfo, count)
+
+
+    for _, v := range instanceIds {
+        fmt.Println("\tInstanceName: ", *v)
+    }
+
+
+    publicIPs := make([]*string, len(instanceIds))
+// 1.2. get servers' public IP.
+    // waiting for completion of new instance running.
+    // after then, can get publicIP.
+    for i, _ := range instanceIds {
+            ipName := baseName + "IP" + strconv.Itoa(i)
+
+            // get public IP
+            publicIP, err := azurehandler.GetPublicIP(connInfo, groupName, ipName)
+            if(err != nil) {
+                fmt.Println(err.Error())
+            }
+
+            fmt.Println("==============> " + *publicIP.PublicIPAddressPropertiesFormat.IPAddress);
+            publicIPs[i] = publicIP.PublicIPAddressPropertiesFormat.IPAddress
+
+//          fmt.Printf("[PublicIP] %#v", publicIP);
+//            fmt.Printf("[PublicIP] %s", *publicIP.PublicIPAddressPropertiesFormat.IPAddress);
+    }
+
+
+// 1.3. insert Farmoni Agent into Servers.
+// 1.4. execute Servers' Agent.
+    for _, v := range publicIPs {
+            for i:=0; ; i++ {
+                err:=copyAndPlayAgent(*v, vmUserName, KeyPath)
+                if(i==30) { os.Exit(3) }
+                    if err == nil {
+                        break;
+                    }
+                    // need to load SSH Service on the VM
+                    time.Sleep(time.Second*3)
+            } // end of for
+    } // end of for
+
+// 1.5. add server list into etcd.
+    addServersToEtcd("azure", instanceIds, publicIPs)
+}
+
 
 func serverList() {
 
@@ -496,6 +694,18 @@ func getInstanceIdListGCP() []*string {
         return etcdhandler.InstanceIDListGCP(ctx, etcdcli)
 }
 
+func getInstanceIdListAZURE() []*string {
+        etcdcli, err := etcdhandler.Connect(etcdServerPort)
+        if err != nil {
+                panic(err)
+        }
+        fmt.Println("connected to etcd - " + *etcdServerPort)
+
+        defer etcdhandler.Close(etcdcli)
+
+        ctx := context.Background()
+        return etcdhandler.InstanceIDListAZURE(ctx, etcdcli)
+}
 
 func monitoringAll() {
 

@@ -42,3 +42,28 @@ gcp:
   username: byoungseob
   keyname: empty
   keyfilepath: /root/.gcp/gcppowerkimkeypair.pem 
+
+
+
+## Config for AZURE ##
+azure:
+
+# for credential
+  credentialfile: /root/.azure/credentials
+
+  groupname: VMGroupName
+  location: westus2
+  virtualnetworkname: virtualNetworkName
+  subnet1name: subnet1Name
+  subnet2name: subnet2Name
+  networksecuritygroupname: nsgName
+#  ipname: "ipName"
+#  nicname: "nicName"
+
+  basename: azurepowerkim
+  username: powerkim
+  password: powerkim
+  keyfilepath: /root/.azure/azurepowerkimkeypair.pem
+  publickeyfilepath: /root/.azure/azurepublickey.pem
+
+

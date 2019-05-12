@@ -149,6 +149,27 @@ func InstanceIDListGCP(ctx context.Context, cli *clientv3.Client) []*string {
         return idList
 }
 
+func InstanceIDListAZURE(ctx context.Context, cli *clientv3.Client) []*string {
+        // get with prefix, all list of /server/azure's key
+        resp, err := cli.Get(ctx, "/server/azure", clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortDescend))
+        if err != nil {
+                log.Fatal(err)
+        }
+
+        idList := make([]*string, len(resp.Kvs))
+        for k, ev := range resp.Kvs {
+                //fmt.Printf("%s : %s\n", strings.Trim(string(ev.Key), "/server/azure"), ev.Value)
+
+                // /server/azure/gcepowerkim0/129.254.175:2019
+                tmpStr := strings.Split(string(ev.Key), "/server/azure")
+                tmpStrs := strings.Split(string(tmpStr[1]), "/")
+                idList[k] = &tmpStrs[1]
+        }
+
+        return idList
+}
+
+
 func ServerListAWS(ctx context.Context, cli *clientv3.Client) []*string {
         // get with prefix, all list of /server/aws's key
         resp, err := cli.Get(ctx, "/server/aws", clientv3.WithPrefix(), clientv3.WithSort(clientv3.SortByKey, clientv3.SortDescend))
